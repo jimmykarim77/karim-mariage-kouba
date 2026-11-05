@@ -265,11 +265,36 @@
   background: #123B34;
   color: #F0DDA9;
 }
+
+/* ---------- Bouton musique animé ---------- */
+#pp{ position:relative; animation:ppBeat 2s ease-in-out infinite; }
+#pp::before,#pp::after{
+  content:""; position:absolute; inset:0; border-radius:50%;
+  border:2px solid #E0C88B; opacity:0; pointer-events:none;
+  animation:ppRipple 2s ease-out infinite;
+}
+#pp::after{ animation-delay:1s; }
+@keyframes ppRipple{ 0%{transform:scale(1);opacity:.8} 100%{transform:scale(2.3);opacity:0} }
+@keyframes ppBeat{ 0%,100%{transform:scale(1)} 50%{transform:scale(1.08)} }
+
+#player.playing #pp,
+#player.playing #pp::before,
+#player.playing #pp::after{ animation:none; }
+
+.player-label{
+  background:rgba(18,59,52,.95); border:1px solid rgba(224,200,139,.6);
+  color:#F0DDA9; border-radius:999px; padding:.4rem .9rem;
+  font-size:.85rem; white-space:nowrap; transition:.4s;
+}
+#player.touched .player-label{ opacity:0; transform:translateY(6px); pointer-events:none; }
+
+
   .reveal{ opacity:0; }
   @media (prefers-reduced-motion: reduce){
     .reveal{ opacity:1 !important; transform:none !important; }
     html{ scroll-behavior:auto; }
-    *{ animation-duration:.001ms !important; transition-duration:.001ms !important; }
+    *{ animation-duration:.001ms !important; transition-duration:.001ms !important;
+    #pp,#pp::before,#pp::after{ animation:none; } }
   }
   [dir="rtl"] .nav-link{ letter-spacing:0; }
   [dir="rtl"] body, [dir="rtl"] .font-display{ font-family:'Amiri',serif; }
@@ -652,13 +677,16 @@
 
 <!-- ══════════════ LECTEUR MUSIQUE ══════════════ -->
 <div id="player" class="fixed z-[70] bottom-5 right-5 hidden">
-  <div class="flex items-center gap-1 bg-forest/95 backdrop-blur border border-gold2/30 rounded-full p-1.5 shadow-2xl">
-    <button id="pp" class="w-11 h-11 grid place-items-center rounded-full bg-gold2/15 text-gold2 hover:bg-gold2/25 transition" aria-label="Lecture / Pause">
-      <i data-lucide="play" class="w-5 h-5" id="pp-icon"></i>
-    </button>
-    <button id="mute" class="w-11 h-11 grid place-items-center rounded-full text-gold2/80 hover:bg-gold2/15 transition" aria-label="Muet">
-      <i data-lucide="volume-2" class="w-5 h-5" id="mute-icon"></i>
-    </button>
+  <div class="flex flex-col items-end gap-2">
+    <span class="player-label" data-i18n="player.hint">🎵 Touchez pour la musique</span>
+    <div class="flex items-center gap-1 bg-forest/95 backdrop-blur border border-gold2/30 rounded-full p-1.5 shadow-2xl">
+      <button id="pp" class="w-11 h-11 grid place-items-center rounded-full bg-gold2/15 text-gold2 hover:bg-gold2/25 transition" aria-label="Lecture / Pause">
+        <i data-lucide="play" class="w-5 h-5" id="pp-icon"></i>
+      </button>
+      <button id="mute" class="w-11 h-11 grid place-items-center rounded-full text-gold2/80 hover:bg-gold2/15 transition" aria-label="Muet">
+        <i data-lucide="volume-2" class="w-5 h-5" id="mute-icon"></i>
+      </button>
+    </div>
   </div>
 </div>
 <audio id="bgm" src="/audio/videoplayback.m4a" loop preload="none"></audio>
@@ -1002,8 +1030,13 @@ if (rsvpAgain) {
 
 /* ═══════════ Musique ═══════════ */
 const bgm=$('#bgm'); let playing=false;
-function setPlayIcon(){ $('#pp-icon').setAttribute('data-lucide', playing?'pause':'play'); lucide.createIcons(); }
+function setPlayIcon(){
+  $('#pp-icon').setAttribute('data-lucide', playing?'pause':'play');
+  $('#player').classList.toggle('playing', playing);
+  lucide.createIcons();
+}
 $('#pp').onclick=()=>{
+  $('#player').classList.add('touched');
   if(playing){ bgm.pause(); playing=false; }
   else { bgm.volume=.45; bgm.play().then(()=>{playing=true;setPlayIcon();}).catch(()=>toast('Ajoutez /audio/wedding.mp3')); }
   setPlayIcon();
